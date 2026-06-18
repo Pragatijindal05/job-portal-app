@@ -3,8 +3,8 @@
 CareerHub is a responsive, high-performance full-stack job portal application designed for tech professionals. It features a decoupled architecture with a dynamic React frontend and an independent Node.js/Express backend API, allowing job seekers to search, filter, and apply for roles seamlessly.
 
 ## Live Links
-- **Live Frontend Platform:** [Paste your Vercel URL here once deployed]
-- **Live Backend API Engine:** [Paste your Render URL here once deployed]
+- **Live Frontend Platform:** https://job-portal-app-three-rho.vercel.app/
+- **Live Backend API Engine:** https://job-portal-app-1y5q.onrender.com
 
 ---
 
