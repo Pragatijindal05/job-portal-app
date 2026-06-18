@@ -1,0 +1,29 @@
+[
+  {
+    "id": 1,
+    "title": "Frontend Developer",
+    "company": "TechCorp",
+    "location": "Remote",
+    "type": "Full-time",
+    "salary": "$80,000 - $100,000",
+    "description": "We are looking for a proficient React and Tailwind CSS developer to build beautiful user interfaces."
+  },
+  {
+    "id": 2,
+    "title": "Backend Engineer",
+    "company": "DataFlow",
+    "location": "New York, NY",
+    "type": "Full-time",
+    "salary": "$95,000 - $120,000",
+    "description": "Join our team to build scalable Node.js microservices and RESTful APIs."
+  },
+  {
+    "id": 3,
+    "title": "UI/UX Designer",
+    "company": "CreativeStudio",
+    "location": "Remote",
+    "type": "Part-time",
+    "salary": "$50,000 - $60,000",
+    "description": "Looking for a creative designer to craft high-fidelity wireframes and user journeys."
+  }
+]
