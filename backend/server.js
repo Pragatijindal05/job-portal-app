@@ -11,7 +11,7 @@ const PORT = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json());
 
-const DB_CONNECTION_STRING = "mongodb+srv://pragatijindal05:Harsh@123@cluster0.okdgbuu.mongodb.net/jobportal?retryWrites=true&w=majority&appName=Cluster0";
+const DB_CONNECTION_STRING = "mongodb+srv://pragatijindal05:Harsh123@cluster0.okdgbuu.mongodb.net/jobportal?retryWrites=true&w=majority&appName=Cluster0";
 
 mongoose.connect(DB_CONNECTION_STRING)
   .then(() => console.log("MongoDB Connected Successfully! 🚀"))
