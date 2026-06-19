@@ -16,7 +16,7 @@ export default function App() {
   const [formData, setFormData] = useState({ name: '', email: '', resume: '' });
   const [message, setMessage] = useState('');
 
-  // Post a Job Modal States (Upgrading to 40% full-stack capability!)
+  // Post a Job Modal States
   const [isPostModalOpen, setIsPostModalOpen] = useState(false);
   const [postJobData, setPostJobData] = useState({
     title: '', company: '', type: 'Full-Time', location: '', salary: '', description: ''
@@ -67,7 +67,7 @@ export default function App() {
     .catch(err => console.error("Error submitting application:", err));
   };
 
-  // Handle Creating/Posting a New Job (The new feature!)
+  // Handle Creating/Posting a New Job
   const handlePostJobSubmit = (e) => {
     e.preventDefault();
     fetch(`${API_BASE_URL}/api/jobs`, {
@@ -81,7 +81,7 @@ export default function App() {
     })
     .then(data => {
       setPostMessage("Job posted successfully! 🎉");
-      fetchJobs(); // Instantly update the lists on screen without reloading!
+      fetchJobs(); // Instantly update the list
       setTimeout(() => {
         setIsPostModalOpen(false);
         setPostJobData({ title: '', company: '', type: 'Full-Time', location: '', salary: '', description: '' });
@@ -96,7 +96,7 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-slate-50 font-sans">
-      {/* Navbar receives state controller to trigger the modal from its button */}
+      {/* Navbar */}
       <Navbar onPostJobClick={() => setIsPostModalOpen(true)} />
       
       {/* Hero Search Section */}
@@ -170,7 +170,7 @@ export default function App() {
         </div>
       )}
 
-      {/* Post a Job Modal (New Operational Unit!) */}
+      {/* Post a Job Modal */}
       {isPostModalOpen && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 backdrop-blur-sm">
           <div className="bg-white rounded-2xl p-6 w-full max-w-lg shadow-xl relative max-h-[90vh] overflow-y-auto">
@@ -196,3 +196,37 @@ export default function App() {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-slate-700 mb-1">Job Type*</label>
+                    <select value={postJobData.type} onChange={e => setPostJobData({...postJobData, type: e.target.value})} className="w-full p-2.5 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 bg-white">
+                      <option value="Full-Time">Full-Time</option>
+                      <option value="Part-Time">Part-Time</option>
+                      <option value="Remote">Remote</option>
+                      <option value="Internship">Internship</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">Location*</label>
+                    <input type="text" required placeholder="e.g. Remote / Bangalore" value={postJobData.location} onChange={e => setPostJobData({...postJobData, location: e.target.value})} className="w-full p-2.5 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500" />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Salary Package</label>
+                  <input type="text" placeholder="e.g. $80,000 - $100,000 / year" value={postJobData.salary} onChange={e => setPostJobData({...postJobData, salary: e.target.value})} className="w-full p-2.5 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500" />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Job Description*</label>
+                  <textarea required rows="4" placeholder="Describe roles, responsibilities, and core requirements..." value={postJobData.description} onChange={e => setPostJobData({...postJobData, description: e.target.value})} className="w-full p-2.5 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 resize-none"></textarea>
+                </div>
+
+                <button type="submit" className="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-3 rounded-lg font-medium transition mt-4">
+                  Publish Job Listing
+                </button>
+              </form>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
