@@ -1,37 +1,82 @@
-import express from 'express';
-import cors from 'cors';
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
+const express = require('express');
+const cors = require('cors');
+const fs = require('fs');
+const path = require('path');
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
-const PORT = 5000;
+const PORT = process.env.PORT || 5000;
 
+// Middleware configuration
 app.use(cors());
-app.use(express.json());
+app.use(express.json()); // Crucial: Allows backend to read JSON body data sent from frontend
 
-const jobsFilePath = path.join(__dirname, 'data', 'jobs.json');
+const DATA_PATH = path.join(__dirname, 'data', 'jobs.json');
 
-// GET: Fetch all jobs
+// Helper function to read data safely
+const readJobsData = () => {
+    try {
+        const jsonData = fs.readFileSync(DATA_PATH, 'utf8');
+        return JSON.parse(jsonData);
+    } catch (error) {
+        console.error("Error reading jobs file:", error);
+        return [];
+    }
+};
+
+// Helper function to write data safely
+const writeJobsData = (data) => {
+    try {
+        fs.writeFileSync(DATA_PATH, JSON.stringify(data, null, 2), 'utf8');
+        return true;
+    } catch (error) {
+        console.error("Error writing to jobs file:", error);
+        return false;
+    }
+};
+
+// 1. GET Endpoint: Fetch all jobs (Existing 20%)
 app.get('/api/jobs', (req, res) => {
-    fs.readFile(jobsFilePath, 'utf8', (err, data) => {
-        if (err) return res.status(500).json({ message: "Error reading data" });
-        res.json(JSON.parse(data));
-    });
+    const jobs = readJobsData();
+    res.status(200).json(jobs);
 });
 
-// POST: Submit a job application
-app.post('/api/applications', (req, res) => {
-    const { jobId, applicantName, applicantEmail, resumeLink } = req.body;
-    
-    if (!jobId || !applicantName || !applicantEmail) {
-        return res.status(400).json({ message: "Please fill in all required fields." });
+// 2. POST Endpoint: Create a new job listing (Upgrading to 40%!)
+app.post('/api/jobs', (req, res) => {
+    const { title, company, type, location, description, salary } = req.body;
+
+    // Simple validation to ensure required fields are present
+    if (!title || !company || !type || !location) {
+        return res.status(400).json({ message: "Required fields missing: title, company, type, or location." });
     }
 
-    console.log(`New Application Received for Job ID ${jobId}:`, { applicantName, applicantEmail, resumeLink });
-    
-    res.status(201).json({ message: "Application submitted successfully!" });
+    const jobs = readJobsData();
+
+    // Create a new structured job object
+    const newJob = {
+        id: jobs.length > 0 ? Math.max(...jobs.map(j => j.id || 0)) + 1 : 1, // Auto-increment ID safely
+        title,
+        company,
+        type,
+        location,
+        description: description || "No description provided.",
+        salary: salary || "Not Disclosed",
+        postedAt: new Date().toISOString().split('T')[0] // Formats as YYYY-MM-DD
+    };
+
+    jobs.push(newJob);
+
+    if (writeJobsData(jobs)) {
+        res.status(201).json({ message: "Job listing published successfully!", job: newJob });
+    } else {
+        res.status(500).json({ message: "Failed to persist data on server database." });
+    }
 });
 
-app.listen(PORT, () => console.log(`Server running on http://localhost:${PORT}`));
+// Root check endpoint
+app.get('/', (req, res) => {
+    res.send('CareerHub API Engine is live and fully operational.');
+});
+
+app.listen(PORT, () => {
+    console.log(`Backend server running smoothly on port ${PORT}`);
+});
