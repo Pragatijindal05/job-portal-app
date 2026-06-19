@@ -2,6 +2,7 @@ import express from 'express';
 import mongoose from 'mongoose';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import Job from './models/Job.js'; // Ensure your path is correct
 
 dotenv.config();
 
@@ -13,52 +14,48 @@ app.use(express.json());
 
 const DB_CONNECTION_STRING = "mongodb+srv://pragatijindal05:Harsh123@cluster0.okdgbuu.mongodb.net/jobportal?retryWrites=true&w=majority&appName=Cluster0";
 
+// Seed Function
+const seedJobs = async () => {
+  const count = await Job.countDocuments();
+  if (count === 0) {
+    const sampleJobs = [
+      { title: "Frontend Developer", company: "Google", location: "Remote", description: "Expertise in React.js and Tailwind CSS required.", salary: "$80,000" },
+      { title: "Backend Engineer", company: "Amazon", location: "Bangalore", description: "Experience with Node.js and MongoDB needed.", salary: "$95,000" },
+      { title: "UI/UX Designer", company: "Microsoft", location: "Hyderabad", description: "Creative designer for web and mobile apps.", salary: "$70,000" },
+      { title: "Full Stack Intern", company: "StartUp Inc.", location: "Pune", description: "Opportunity to learn and grow with our core team.", salary: "$15,000" }
+    ];
+    await Job.insertMany(sampleJobs);
+    console.log("4 professional sample jobs added successfully!");
+  }
+};
+
 mongoose.connect(DB_CONNECTION_STRING)
-  .then(() => console.log("MongoDB Connected Successfully! 🚀"))
+  .then(async () => {
+    console.log("MongoDB Connected Successfully! 🚀");
+    await seedJobs();
+  })
   .catch(err => console.error("Database connection error:", err));
 
-// 2. Schema
-const JobSchema = new mongoose.Schema({
-  title: { type: String, required: true },
-  company: { type: String, required: true },
-  type: { type: String, required: true },
-  location: { type: String, required: true },
-  salary: { type: String, default: "Not Disclosed" },
-  description: { type: String, required: true }
-}, { timestamps: true });
-
-const Job = mongoose.model('Job', JobSchema);
-
-// 3. Routes
-app.get('/', (req, res) => {
-    res.send('CareerHub API Engine is live and connected to cloud MongoDB.');
-});
-
+// Routes
+// GET all jobs
 app.get('/api/jobs', async (req, res) => {
   try {
-    const dbJobs = await Job.find().sort({ createdAt: -1 });
-    res.status(200).json(dbJobs);
+    const jobs = await Job.find();
+    res.json(jobs);
   } catch (err) {
-    res.status(500).json({ error: "Data fetch nahi ho paya server se." });
+    res.status(500).json({ error: err.message });
   }
 });
 
+// POST a new job
 app.post('/api/jobs', async (req, res) => {
   try {
-    const { title, company, type, location, description, salary } = req.body;
-
-    if (!title || !company || !type || !location || !description) {
-        return res.status(400).json({ message: "Required fields missing." });
-    }
-
-    const newJob = new Job({ title, company, type, location, salary, description });
-    const savedJob = await newJob.save();
-    res.status(201).json({ message: "Job listing published successfully!", job: savedJob });
+    const newJob = new Job(req.body);
+    await newJob.save();
+    res.status(201).json(newJob);
   } catch (err) {
-    res.status(400).json({ error: "Validation failed" });
+    res.status(400).json({ error: err.message });
   }
 });
 
-app.listen(PORT, () => {
-    console.log(`Backend server running smoothly on port ${PORT}`);
-});
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
