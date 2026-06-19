@@ -9,9 +9,12 @@ export default function Navbar() {
         <a href="#" className="hover:text-indigo-400 transition">Dashboard</a>
         <a href="#" className="hover:text-indigo-400 transition">Companies</a>
       </div>
-      <button className="bg-indigo-600 hover:bg-indigo-700 px-4 py-2 rounded-lg font-medium transition">
-        Post a Job
-      </button>
+      <button 
+      onClick={onPostJobClick} 
+      className="bg-indigo-600 hover:bg-indigo-700 text-white font-medium px-4 py-2 rounded-lg transition"
+    >
+      Post a Job
+    </button>
     </nav>
   );
 }

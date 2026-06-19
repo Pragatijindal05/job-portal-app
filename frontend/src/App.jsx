@@ -3,7 +3,6 @@ import Navbar from './components/Navbar';
 import FilterSidebar from './components/FilterSidebar';
 import JobCard from './components/JobCard';
 
-
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 export default function App() {
@@ -13,26 +12,37 @@ export default function App() {
   const [filterLocation, setFilterLocation] = useState('');
   const [selectedJob, setSelectedJob] = useState(null);
   
-  // Form State
+  // Application Form State
   const [formData, setFormData] = useState({ name: '', email: '', resume: '' });
   const [message, setMessage] = useState('');
 
-  // Clean fetch to use dynamic API Base URL
-  useEffect(() => {
+  // Post a Job Modal States (Upgrading to 40% full-stack capability!)
+  const [isPostModalOpen, setIsPostModalOpen] = useState(false);
+  const [postJobData, setPostJobData] = useState({
+    title: '', company: '', type: 'Full-Time', location: '', salary: '', description: ''
+  });
+  const [postMessage, setPostMessage] = useState('');
+
+  // Fetch jobs dynamically
+  const fetchJobs = () => {
     fetch(`${API_BASE_URL}/api/jobs`)
       .then(res => res.json())
       .then(data => setJobs(data))
       .catch(err => console.error("Error fetching jobs:", err));
+  };
+
+  useEffect(() => {
+    fetchJobs();
   }, []);
 
   const filteredJobs = jobs.filter(job => {
-    const matchesSearch = job.title.toLowerCase().includes(search.toLowerCase()) || job.company.toLowerCase().includes(search.toLowerCase());
+    const matchesSearch = job.title?.toLowerCase().includes(search.toLowerCase()) || job.company?.toLowerCase().includes(search.toLowerCase());
     const matchesType = filterType ? job.type === filterType : true;
     const matchesLocation = filterLocation ? job.location === filterLocation : true;
     return matchesSearch && matchesType && matchesLocation;
   });
 
-  // Clean POST fetch to use dynamic API Base URL
+  // Handle Apply Form Submission
   const handleApplySubmit = (e) => {
     e.preventDefault();
     fetch(`${API_BASE_URL}/api/applications`, {
@@ -47,7 +57,7 @@ export default function App() {
     })
     .then(res => res.json())
     .then(data => {
-      setMessage(data.message);
+      setMessage(data.message || "Application submitted!");
       setTimeout(() => {
         setSelectedJob(null);
         setFormData({ name: '', email: '', resume: '' });
@@ -57,15 +67,43 @@ export default function App() {
     .catch(err => console.error("Error submitting application:", err));
   };
 
+  // Handle Creating/Posting a New Job (The new feature!)
+  const handlePostJobSubmit = (e) => {
+    e.preventDefault();
+    fetch(`${API_BASE_URL}/api/jobs`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(postJobData)
+    })
+    .then(res => {
+      if(!res.ok) throw new Error("Failed to create job");
+      return res.json();
+    })
+    .then(data => {
+      setPostMessage("Job posted successfully! 🎉");
+      fetchJobs(); // Instantly update the lists on screen without reloading!
+      setTimeout(() => {
+        setIsPostModalOpen(false);
+        setPostJobData({ title: '', company: '', type: 'Full-Time', location: '', salary: '', description: '' });
+        setPostMessage('');
+      }, 2000);
+    })
+    .catch(err => {
+      console.error("Error creating job listing:", err);
+      setPostMessage("Failed to publish job listing.");
+    });
+  };
+
   return (
     <div className="min-h-screen bg-slate-50 font-sans">
-      <Navbar />
+      {/* Navbar receives state controller to trigger the modal from its button */}
+      <Navbar onPostJobClick={() => setIsPostModalOpen(true)} />
       
       {/* Hero Search Section */}
-      <header className="bg-slate-900 text-white py-12 px-6 text-center">
+      <header className="bg-slate-900 text-white py-12 px-6 text-center relative">
         <h1 className="text-4xl font-extrabold mb-4">Find Your Dream Tech Job</h1>
         <p className="text-slate-400 mb-6">Explore frontend, backend, and fullstack opportunities.</p>
-        <div className="max-w-xl mx-auto">
+        <div className="max-w-xl mx-auto flex gap-4">
           <input 
             type="text" 
             placeholder="Search by job title or company..." 
@@ -73,6 +111,12 @@ export default function App() {
             onChange={(e) => setSearch(e.target.value)}
             className="w-full p-4 rounded-xl text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-lg"
           />
+          <button 
+            onClick={() => setIsPostModalOpen(true)}
+            className="md:hidden bg-indigo-600 hover:bg-indigo-700 px-4 rounded-xl font-medium"
+          >
+            Post
+          </button>
         </div>
       </header>
 
@@ -93,7 +137,7 @@ export default function App() {
         </section>
       </main>
 
-      {/* Application Modal */}
+      {/* Apply Modal */}
       {selectedJob && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 backdrop-blur-sm">
           <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-xl relative">
@@ -125,6 +169,30 @@ export default function App() {
           </div>
         </div>
       )}
-    </div>
-  );
-}
+
+      {/* Post a Job Modal (New Operational Unit!) */}
+      {isPostModalOpen && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-lg shadow-xl relative max-h-[90vh] overflow-y-auto">
+            <button onClick={() => setIsPostModalOpen(false)} className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 text-xl">&times;</button>
+            <h3 className="text-2xl font-bold text-slate-800 mb-1">Post a New Tech Opening</h3>
+            <p className="text-slate-500 text-sm mb-6">Fill in details to broadcast opportunities instantly.</p>
+
+            {postMessage ? (
+              <div className="bg-emerald-50 text-emerald-700 p-6 rounded-xl text-center font-bold text-lg">{postMessage}</div>
+            ) : (
+              <form onSubmit={handlePostJobSubmit} className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">Job Title*</label>
+                    <input type="text" required placeholder="e.g. SDE-1 (Frontend)" value={postJobData.title} onChange={e => setPostJobData({...postJobData, title: e.target.value})} className="w-full p-2.5 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">Company Name*</label>
+                    <input type="text" required placeholder="e.g. CareerHub Inc" value={postJobData.company} onChange={e => setPostJobData({...postJobData, company: e.target.value})} className="w-full p-2.5 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500" />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">Job Type*</label>
