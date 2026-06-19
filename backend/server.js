@@ -1,80 +1,61 @@
-const express = require('express');
-const cors = require('cors');
-const fs = require('fs');
-const path = require('path');
+import express from 'express';
+import mongoose from 'mongoose';
+import cors from 'cors';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Middleware configuration
 app.use(cors());
-app.use(express.json()); // Crucial: Allows backend to read JSON body data sent from frontend
+app.use(express.json());
 
-const DATA_PATH = path.join(__dirname, 'data', 'jobs.json');
+// 1. MongoDB Connection
+mongoose.connect(process.env.MONGO_URI)
+  .then(() => console.log("MongoDB Connected Successfully! 🚀"))
+  .catch(err => console.error("Database connection error:", err));
 
-// Helper function to read data safely
-const readJobsData = () => {
-    try {
-        const jsonData = fs.readFileSync(DATA_PATH, 'utf8');
-        return JSON.parse(jsonData);
-    } catch (error) {
-        console.error("Error reading jobs file:", error);
-        return [];
-    }
-};
+// 2. Schema
+const JobSchema = new mongoose.Schema({
+  title: { type: String, required: true },
+  company: { type: String, required: true },
+  type: { type: String, required: true },
+  location: { type: String, required: true },
+  salary: { type: String, default: "Not Disclosed" },
+  description: { type: String, required: true }
+}, { timestamps: true });
 
-// Helper function to write data safely
-const writeJobsData = (data) => {
-    try {
-        fs.writeFileSync(DATA_PATH, JSON.stringify(data, null, 2), 'utf8');
-        return true;
-    } catch (error) {
-        console.error("Error writing to jobs file:", error);
-        return false;
-    }
-};
+const Job = mongoose.model('Job', JobSchema);
 
-// 1. GET Endpoint: Fetch all jobs (Existing 20%)
-app.get('/api/jobs', (req, res) => {
-    const jobs = readJobsData();
-    res.status(200).json(jobs);
+// 3. Routes
+app.get('/', (req, res) => {
+    res.send('CareerHub API Engine is live and connected to cloud MongoDB.');
 });
 
-// 2. POST Endpoint: Create a new job listing (Upgrading to 40%!)
-app.post('/api/jobs', (req, res) => {
+app.get('/api/jobs', async (req, res) => {
+  try {
+    const dbJobs = await Job.find().sort({ createdAt: -1 });
+    res.status(200).json(dbJobs);
+  } catch (err) {
+    res.status(500).json({ error: "Data fetch nahi ho paya server se." });
+  }
+});
+
+app.post('/api/jobs', async (req, res) => {
+  try {
     const { title, company, type, location, description, salary } = req.body;
 
-    // Simple validation to ensure required fields are present
-    if (!title || !company || !type || !location) {
-        return res.status(400).json({ message: "Required fields missing: title, company, type, or location." });
+    if (!title || !company || !type || !location || !description) {
+        return res.status(400).json({ message: "Required fields missing." });
     }
 
-    const jobs = readJobsData();
-
-    // Create a new structured job object
-    const newJob = {
-        id: jobs.length > 0 ? Math.max(...jobs.map(j => j.id || 0)) + 1 : 1, // Auto-increment ID safely
-        title,
-        company,
-        type,
-        location,
-        description: description || "No description provided.",
-        salary: salary || "Not Disclosed",
-        postedAt: new Date().toISOString().split('T')[0] // Formats as YYYY-MM-DD
-    };
-
-    jobs.push(newJob);
-
-    if (writeJobsData(jobs)) {
-        res.status(201).json({ message: "Job listing published successfully!", job: newJob });
-    } else {
-        res.status(500).json({ message: "Failed to persist data on server database." });
-    }
-});
-
-// Root check endpoint
-app.get('/', (req, res) => {
-    res.send('CareerHub API Engine is live and fully operational.');
+    const newJob = new Job({ title, company, type, location, salary, description });
+    const savedJob = await newJob.save();
+    res.status(201).json({ message: "Job listing published successfully!", job: savedJob });
+  } catch (err) {
+    res.status(400).json({ error: "Validation failed" });
+  }
 });
 
 app.listen(PORT, () => {
