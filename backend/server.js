@@ -54,12 +54,20 @@ app.get('/api/jobs', async (req, res) => {
   const jobs = await Job.find();
   res.json(jobs);
 });
-
 app.post('/api/jobs', async (req, res) => {
   const newJob = new Job(req.body);
   await newJob.save();
   res.status(201).json(newJob);
 });
+app.get('/api/jobs/locations', async (req, res) => {
+  try {
+    const locations = await Job.distinct('location');
+    res.json(locations);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 
 // --- User Action Routes ---
 app.post('/api/user/save-job', async (req, res) => {
