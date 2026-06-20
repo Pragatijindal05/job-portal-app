@@ -1,39 +1,42 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 export default function Register() {
-  const [formData, setFormData] = useState({ name: '', email: '', password: '', role: 'user' });
+  const [formData, setFormData] = useState({ name: '', email: '', password: '' });
+  const navigate = useNavigate();
 
-  const handleSubmit = async (e) => {
+  const handleRegister = async (e) => {
     e.preventDefault();
-    
-    // Dynamic URL ka use karein
-    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-    
-    const res = await fetch(`${API_URL}/api/auth/register`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(formData)
-    });
-    
-    if (res.ok) {
-        alert("Registered successfully! Please login.");
-    } else {
-        const errorData = await res.json();
-        alert("Registration failed: " + (errorData.message || "Something went wrong"));
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/auth/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+      });
+
+      if (response.ok) {
+        alert("Registration Successful! Please Login.");
+        navigate('/login');
+      } else {
+        alert("Registration Failed");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Server Error");
     }
-};
+  };
 
   return (
-    <form onSubmit={handleSubmit} className="p-6 bg-white shadow-md rounded-lg max-w-sm mx-auto">
-      <h2 className="text-xl font-bold mb-4">Register</h2>
-      <input className="w-full p-2 border mb-2" type="text" placeholder="Name" onChange={e => setFormData({...formData, name: e.target.value})} />
-      <input className="w-full p-2 border mb-2" type="email" placeholder="Email" onChange={e => setFormData({...formData, email: e.target.value})} />
-      <input className="w-full p-2 border mb-2" type="password" placeholder="Password" onChange={e => setFormData({...formData, password: e.target.value})} />
-      <select className="w-full p-2 border mb-4" onChange={e => setFormData({...formData, role: e.target.value})}>
-        <option value="user">Job Seeker</option>
-        <option value="recruiter">Recruiter</option>
-      </select>
-      <button className="w-full bg-indigo-600 text-white py-2 rounded">Sign Up</button>
-    </form>
+    <div className="min-h-screen flex items-center justify-center bg-slate-50 p-6">
+      <div className="bg-white p-10 rounded-2xl shadow-xl border border-slate-100 w-full max-w-md">
+        <h2 className="text-3xl font-bold text-center mb-8">Create Account</h2>
+        <form onSubmit={handleRegister} className="space-y-6">
+          <input className="w-full p-3 border rounded-lg" placeholder="Full Name" onChange={(e) => setFormData({...formData, name: e.target.value})} required />
+          <input className="w-full p-3 border rounded-lg" type="email" placeholder="Email" onChange={(e) => setFormData({...formData, email: e.target.value})} required />
+          <input className="w-full p-3 border rounded-lg" type="password" placeholder="Password" onChange={(e) => setFormData({...formData, password: e.target.value})} required />
+          <button className="w-full bg-indigo-600 text-white p-3 rounded-lg font-bold">Register</button>
+        </form>
+      </div>
+    </div>
   );
 }

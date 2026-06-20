@@ -11,23 +11,21 @@ dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
-const JWT_SECRET = process.env.JWT_SECRET; // In production, use process.env.JWT_SECRET
 
 app.use(cors());
 app.use(express.json());
 
-const DB_CONNECTION_STRING = process.env.MONGO_URI;
-
-mongoose.connect(DB_CONNECTION_STRING)
+// Database Connection
+mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log("MongoDB Connected Successfully! 🚀"))
   .catch(err => console.error("Database connection error:", err));
 
 // --- Auth Routes ---
 app.post('/api/auth/register', async (req, res) => {
   try {
-    const { name, email, password, role } = req.body;
+    const { name, email, password } = req.body;
     const hashedPassword = await bcrypt.hash(password, 10);
-    const newUser = new User({ name, email, password: hashedPassword, role });
+    const newUser = new User({ name, email, password: hashedPassword });
     await newUser.save();
     res.status(201).json({ message: "User registered successfully" });
   } catch (err) {
@@ -42,8 +40,8 @@ app.post('/api/auth/login', async (req, res) => {
     if (!user || !(await bcrypt.compare(password, user.password))) {
       return res.status(401).json({ error: "Invalid credentials" });
     }
-    const token = jwt.sign({ id: user._id, role: user.role }, JWT_SECRET, { expiresIn: '1h' });
-    res.json({ token, user: { id: user._id, name: user.name, role: user.role } });
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
+    res.json({ token, user: { name: user.name } });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -51,29 +49,22 @@ app.post('/api/auth/login', async (req, res) => {
 
 // --- Job Routes ---
 app.get('/api/jobs', async (req, res) => {
-  const jobs = await Job.find();
-  res.json(jobs);
-});
-app.post('/api/jobs', async (req, res) => {
-  const newJob = new Job(req.body);
-  await newJob.save();
-  res.status(201).json(newJob);
-});
-app.get('/api/jobs/locations', async (req, res) => {
   try {
-    const locations = await Job.distinct('location');
-    res.json(locations);
+    const jobs = await Job.find();
+    res.json(jobs);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: "Failed to fetch jobs" });
   }
 });
 
-
-// --- User Action Routes ---
-app.post('/api/user/save-job', async (req, res) => {
-  const { userId, jobId } = req.body;
-  await User.findByIdAndUpdate(userId, { $addToSet: { savedJobs: jobId } });
-  res.json({ message: "Job saved!" });
+app.post('/api/jobs', async (req, res) => {
+  try {
+    const newJob = new Job(req.body);
+    await newJob.save();
+    res.status(201).json(newJob);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
 });
 
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
