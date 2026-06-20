@@ -5,13 +5,23 @@ export default function Register() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const res = await fetch('http://localhost:5000/api/auth/register', {
+    
+    // Dynamic URL ka use karein
+    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+    
+    const res = await fetch(`${API_URL}/api/auth/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(formData)
     });
-    if (res.ok) alert("Registered successfully! Please login.");
-  };
+    
+    if (res.ok) {
+        alert("Registered successfully! Please login.");
+    } else {
+        const errorData = await res.json();
+        alert("Registration failed: " + (errorData.message || "Something went wrong"));
+    }
+};
 
   return (
     <form onSubmit={handleSubmit} className="p-6 bg-white shadow-md rounded-lg max-w-sm mx-auto">
