@@ -1,8 +1,10 @@
 import React, { useState, useContext } from 'react';
+import { useNavigate } from 'react-router-dom'; // 1. Import
 import { AuthContext } from '../context/AuthContext';
 
 export default function Login() {
-  const { login } = useContext(AuthContext); // Get login function from context
+  const { login } = useContext(AuthContext);
+  const navigate = useNavigate(); // 2. Hook initialize
   const [formData, setFormData] = useState({ email: '', password: '' });
 
   const handleSubmit = async (e) => {
@@ -19,9 +21,10 @@ export default function Login() {
     const data = await res.json();
     
     if (data.user) {
-      login(data.user); // This updates global state!
-      alert("Logged in successfully!");
-    } else {
+  login(data.user); 
+  alert("Logged in successfully!");
+  navigate('/'); // '/dashboard' ki jagah '/' try karo, kyunki aapka main page wahi hai
+} else {
       alert("Invalid credentials");
     }
   };
